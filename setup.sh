@@ -37,26 +37,17 @@ function wait_for_job_to_be_created_in_jenkins() {
   done
 }
 
-cp ~/.ssh/id_rsa.pub "${PWD}/git-server/keys"
-
+# set up keys in the git server from jenkins and host
 keys=$(docker exec -it jenkins cat /root/.ssh/id_rsa.pub)
-
+cp ~/.ssh/id_rsa.pub "${PWD}/git-server/keys"
+docker exec jenkins /bin/bash -c " ssh-keyscan -p 22 git-server >> ~/.ssh/known_hosts"
+docker-compose restart git-server
+docker exec  git-server sh -c "echo $keys >> /home/git/.ssh/authorized_keys"
+docker exec  git-server sh -c "chmod 700 /home/git/.ssh"
+docker exec  git-server sh -c "chmod 600 /home/git/.ssh/*"
 docker exec jenkins /bin/bash -c "chmod 700 /root/.ssh"
-
 docker exec jenkins /bin/bash -c "chmod 600 /root/.ssh/*"
 
-# need to wait until it actually runs teh pipeline-create.groovy before removing it.
+# need to wait until it actually runs the pipeline-create.groovy before removing it.
 wait_for_job_to_be_created_in_jenkins
-
 docker exec jenkins /bin/bash -c "rm -rf /var/jenkins_home/init.groovy.d/pipeline-create.groovy"
-
-# FIXME
-docker exec jenkins /bin/bash -c " ssh-keyscan -p 22 git-server >> ~/.ssh/known_hosts"
-
-docker-compose restart git-server
-
-docker exec  git-server sh -c "echo $keys >> /home/git/.ssh/authorized_keys"
-
-docker exec  git-server sh -c "chmod 700 /home/git/.ssh"
-
-docker exec  git-server sh -c "chmod 600 /home/git/.ssh/*"
