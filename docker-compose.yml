@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  docker-registry:
+    container_name: docker-registry
+    image: registry:2.8.1
+    ports:
+      - "5000:5000"
+    volumes:
+      - /var/lib/registry 
+  git-server:
+    container_name: git-server
+    image: jkarlos/git-server-docker
+    ports:
+      - "2222:22"
+    volumes:
+    - ./git-server/keys:/git-server/keys
+    - ./git-server/repos:/git-server/repos
+  jenkins:
+    container_name: jenkins
+    build: ./jenkins
+    ports:
+      - '8090:8080'
+      - '8443:8443'
+      - '50000:50000'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/jenkins_home
+
+  webapp:
+    container_name: webapp
+    build: ./webapp
+    ports:
+      - "8091:80"    
+volumes:
+  jenkins_data:
+    driver: local
