@@ -1,9 +1,2 @@
-workflow-aggregator
 git
-ssh
-ssh-agent
-docker-build-step
-docker-plugin
-docker-build-step
-dockerhub-notification
-oauth-credentials
+blueocean
