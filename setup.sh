@@ -8,6 +8,11 @@ trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
 set -x
+
+if [[ ! -d webapp ]]; then
+  git clone git-server/repos/webapp.git
+fi
+
 docker-compose up -d
 
 if [[ ! -d git-server ]]; then
