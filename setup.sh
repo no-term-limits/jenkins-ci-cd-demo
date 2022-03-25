@@ -13,8 +13,6 @@ if [[ ! -d webapp ]]; then
   git clone git-server/repos/webapp.git
 fi
 
-docker-compose up -d
-
 if [[ ! -d git-server ]]; then
   >&2 echo "ERROR: run this script from the project root, where git-server and jenkins are located"
   exit 1
@@ -37,16 +35,19 @@ function wait_for_job_to_be_created_in_jenkins() {
   done
 }
 
+cp ~/.ssh/id_rsa.pub "${PWD}/git-server/keys"
+docker-compose up -d
+
 # set up keys in the git server from jenkins and host
 keys=$(docker exec -it jenkins cat /root/.ssh/id_rsa.pub)
-cp ~/.ssh/id_rsa.pub "${PWD}/git-server/keys"
-docker exec jenkins /bin/bash -c " ssh-keyscan -p 22 git-server >> ~/.ssh/known_hosts"
-docker-compose restart git-server
 docker exec  git-server sh -c "echo $keys >> /home/git/.ssh/authorized_keys"
 docker exec  git-server sh -c "chmod 700 /home/git/.ssh"
 docker exec  git-server sh -c "chmod 600 /home/git/.ssh/*"
 docker exec jenkins /bin/bash -c "chmod 700 /root/.ssh"
 docker exec jenkins /bin/bash -c "chmod 600 /root/.ssh/*"
+
+docker-compose restart git-server
+docker exec jenkins /bin/bash -c " ssh-keyscan -p 22 git-server >> ~/.ssh/known_hosts"
 
 # need to wait until it actually runs the pipeline-create.groovy before removing it.
 wait_for_job_to_be_created_in_jenkins
