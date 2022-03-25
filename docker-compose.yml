@@ -5,7 +5,7 @@ services:
     container_name: docker-registry
     image: registry:2.8.1
     ports:
-      - "5000:5000"
+      - "8092:5000"
     volumes:
       - /var/lib/registry 
   git-server:
