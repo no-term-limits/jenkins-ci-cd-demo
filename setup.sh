@@ -46,13 +46,7 @@ docker exec jenkins /bin/bash -c "chmod 700 /root/.ssh"
 docker exec jenkins /bin/bash -c "chmod 600 /root/.ssh/*"
 
 # need to wait until it actually runs teh pipeline-create.groovy before removing it.
-# also it seems like it doesn't yet have the plugins installed when it runs default-user.groovy,
-# so that script fails, though maybe we don't need it.
-# FIXME: wait 'til scripts are done.
-# docker-compose logs -f
 wait_for_job_to_be_created_in_jenkins
-
-docker exec jenkins /bin/bash -c "rm -rf /var/jenkins_home/init.groovy.d/default-user.groovy"
 
 docker exec jenkins /bin/bash -c "rm -rf /var/jenkins_home/init.groovy.d/pipeline-create.groovy"
 
