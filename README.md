@@ -14,3 +14,11 @@ This starts:
 After running `setup.sh`, it will create a webapp repo that you can commit back to (pushing to the
 bare git repo under git-server/repos/webapp.git). When you commit, jenkins will pick up changes,
 build them, and deploy the new docker container (accessible at http://localhost:8091 on the host).
+
+## TODO
+
+ 1. change host ports in one place if practical
+ 1. remove webapp from docker-compose
+ 1. trigger first jenkins job from setup.sh
+ 1. add CI and prove webapp comes up
+ 1. update webapp source and commit back

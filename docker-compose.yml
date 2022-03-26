@@ -27,11 +27,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/jenkins_home
 
-  webapp:
-    container_name: webapp
-    build: ./webapp
-    ports:
-      - "8091:80"    
+  # webapp:
+  #   container_name: webapp
+  #   build: ./webapp
+  #   ports:
+  #     - "8091:80"    
 volumes:
   jenkins_data:
     driver: local

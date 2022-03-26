@@ -18,11 +18,14 @@ if [[ ! -d git-server ]]; then
   exit 1
 fi
 
+export JENKINS_HOST_PORT=8090
+export WEBAPP_HOST_PORT=8091
+
 function wait_for_job_to_be_created_in_jenkins() {
   local attempts=0
 
   while true ; do
-    if curl -s --fail "http://localhost:8090/job/Webapp_Pipeline_Deploy"; then
+    if curl -s --fail "http://localhost:${JENKINS_HOST_PORT}/job/Webapp_Pipeline_Deploy"; then
       break;
     elif [[ "$attempts" -gt 100 ]]; then
       >&2 echo "ERROR: could not find job in jenkins after 100 attempts"
@@ -34,6 +37,28 @@ function wait_for_job_to_be_created_in_jenkins() {
     fi
   done
 }
+
+function wait_for_webapp_to_be_deployed() {
+  local attempts=0
+
+  while true ; do
+    if curl -s --fail "http://localhost:${WEBAPP_HOST_PORT}"; then
+      break;
+    elif [[ "$attempts" -gt 100 ]]; then
+      >&2 echo "ERROR: could not hit webapp after 100 attempts"
+      exit 1
+    else
+      attempts=$(( attempts + 1 ))
+      echo "waiting for webapp to come online. attempt: $attempts"
+      sleep 1
+    fi
+  done
+}
+
+if curl -s --fail "http://localhost:${WEBAPP_HOST_PORT}"; then
+  >&2 echo "ERROR: webapp is already running. this is not expected"
+  exit 1
+fi
 
 cp ~/.ssh/id_rsa.pub "${PWD}/git-server/keys"
 docker-compose up -d
@@ -53,3 +78,4 @@ docker exec jenkins /bin/bash -c " sleep 10 && ssh-keyscan -p 22 git-server >> ~
 # need to wait until it actually runs the pipeline-create.groovy before removing it.
 wait_for_job_to_be_created_in_jenkins
 docker exec jenkins /bin/bash -c "rm -rf /var/jenkins_home/init.groovy.d/pipeline-create.groovy"
+wait_for_webapp_to_be_deployed
