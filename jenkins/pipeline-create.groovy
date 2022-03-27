@@ -6,9 +6,8 @@ import jenkins.hudson.*
 import hudson.model.*
 import hudson.triggers.SCMTrigger;
 
-// def scm = new GitSCM("ssh://git@18.139.110.189:2222/git-server/repos/webapp.git")
 def scm = new GitSCM("ssh://git@git-server:22/git-server/repos/webapp.git")
-scm.branches = [new BranchSpec("*/master")];
+scm.branches = [new BranchSpec("*/main")];
 
 def flowDefinition = new org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition(scm, "Jenkinsfile")
 
@@ -21,6 +20,4 @@ SCMTrigger trigger = new SCMTrigger("H/10 * * * *");
 
 job.definition = flowDefinition
 
-
 parent.reload()
-
