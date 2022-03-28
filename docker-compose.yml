@@ -10,7 +10,8 @@ services:
       - /var/lib/registry 
   git-server:
     container_name: git-server
-    image: jkarlos/git-server-docker
+    # image: jkarlos/git-server-docker
+    build: ./git-server
     ports:
       - "2222:22"
     volumes:
