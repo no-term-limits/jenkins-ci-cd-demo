@@ -1,13 +1,23 @@
 #!/usr/bin/env bash
 
 function error_handler() {
-  echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
 set -x
+
+if ! command -v docker >/dev/null ; then
+  >&2 echo "ERROR: 'docker' is required to run this. Please install it. https://docs.docker.com/get-docker/"
+  exit 1
+fi
+
+if ! command -v git >/dev/null ; then
+  >&2 echo "ERROR: 'git' is required to run this. Please install it. https://git-scm.com/book/en/v2/Getting-Started-Installing-Git"
+  exit 1
+fi
 
 if [[ ! -d webapp ]]; then
   git clone git-server/repos/webapp.git

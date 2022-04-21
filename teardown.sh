@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+docker-compose down -v --rmi all
+
+if [[ -n "$(docker ps --filter "name=webapp" --format '{{.Names}}')" ]]; then
+  docker stop webapp
+fi
+if [[ -n "$(docker ps -a --filter "name=webapp" --format '{{.Names}}')" ]]; then
+  docker rm webapp
+fi
