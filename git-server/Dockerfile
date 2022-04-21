@@ -8,7 +8,7 @@ RUN apk add --no-cache \
 # openssh=7.2_p2-r1 \
   openssh \
 # git=2.8.3-r0
-  git=2.34.1-r0
+  git=2.34.2-r0
 
 # Key generation on the server
 RUN ssh-keygen -A

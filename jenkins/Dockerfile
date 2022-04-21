@@ -30,8 +30,9 @@ ENV JENKINS_PASS nutonomy
 RUN ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''  
 
 
-# allows to skip Jenkins setup wizard
-ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
+# allows us to skip the Jenkins setup wizard
+# lets us hit the api without a crumb for simplicity
+ENV JAVA_OPTS '-Djenkins.install.runSetupWizard=false -Dhudson.security.csrf.GlobalCrumbIssuerConfiguration.DISABLE_CSRF_PROTECTION=true'
 
 # Jenkins runs all grovy files from init.groovy.d dir
 # use this for creating default admin user
