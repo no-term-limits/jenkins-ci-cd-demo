@@ -7,8 +7,6 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-set -x
-
 if ! command -v docker >/dev/null ; then
   >&2 echo "ERROR: 'docker' is required to run this. Please install it. https://docs.docker.com/get-docker/"
   exit 1
@@ -98,3 +96,5 @@ docker exec jenkins /bin/bash -c "rm -rf /var/jenkins_home/init.groovy.d/pipelin
 curl --fail -X POST http://localhost:8090/job/Webapp_Pipeline_Deploy/build
 
 wait_for_webapp_to_be_deployed
+
+echo -e "\nWebapp deployed successfully with Jenkins. Check it out at http://localhost:${WEBAPP_HOST_PORT}.\nJenkins will also be running at http://localhost:${JENKINS_HOST_PORT}"
