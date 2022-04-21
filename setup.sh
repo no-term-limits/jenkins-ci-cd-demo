@@ -28,6 +28,11 @@ if [[ ! -d git-server ]]; then
   exit 1
 fi
 
+if ! docker ps >/dev/null ; then
+  >&2 echo "ERROR: Failed to run 'docker ps'. This could be a permission issue. Does this user have access to run docker?"
+  exit 1
+fi
+
 export JENKINS_HOST_PORT=8090
 export WEBAPP_HOST_PORT=8091
 
@@ -76,9 +81,9 @@ docker-compose up -d
 # set up keys in the git server from jenkins and host
 docker-compose restart git-server
 jenkins_public_key=$(docker exec -it jenkins cat /root/.ssh/id_rsa.pub)
-docker exec  git-server sh -c "echo $jenkins_public_key >> /home/git/.ssh/authorized_keys"
-docker exec  git-server sh -c "chmod 700 /home/git/.ssh"
-docker exec  git-server sh -c "chmod 600 /home/git/.ssh/*"
+docker exec git-server sh -c "echo $jenkins_public_key >> /home/git/.ssh/authorized_keys"
+docker exec git-server sh -c "chmod 700 /home/git/.ssh"
+docker exec git-server sh -c "chmod 600 /home/git/.ssh/*"
 docker exec jenkins /bin/bash -c "chmod 700 /root/.ssh"
 docker exec jenkins /bin/bash -c "chmod 600 /root/.ssh/*"
 
