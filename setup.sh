@@ -78,4 +78,8 @@ docker exec jenkins /bin/bash -c " sleep 10 && ssh-keyscan -p 22 git-server >> ~
 # need to wait until it actually runs the pipeline-create.groovy before removing it.
 wait_for_job_to_be_created_in_jenkins
 docker exec jenkins /bin/bash -c "rm -rf /var/jenkins_home/init.groovy.d/pipeline-create.groovy"
+
+# kick off build, which will deploy webapp
+curl --fail -X POST http://localhost:8090/job/Webapp_Pipeline_Deploy/build
+
 wait_for_webapp_to_be_deployed
