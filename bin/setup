@@ -31,8 +31,8 @@ if ! docker ps >/dev/null ; then
   exit 1
 fi
 
-export JENKINS_HOST_PORT=8090
-export WEBAPP_HOST_PORT=8091
+script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+source "${script_dir}/environment_variables_to_source"
 
 function wait_for_job_to_be_created_in_jenkins() {
   local attempts=0
