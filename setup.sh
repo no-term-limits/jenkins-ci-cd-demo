@@ -55,7 +55,7 @@ function wait_for_webapp_to_be_deployed() {
   local attempts=0
 
   while true ; do
-    if curl -s --fail "http://localhost:${WEBAPP_HOST_PORT}"; then
+    if curl -s --fail "http://localhost:${WEBAPP_HOST_PORT}" > /dev/null; then
       break;
     elif [[ "$attempts" -gt 100 ]]; then
       >&2 echo "ERROR: could not hit webapp after 100 attempts"
@@ -68,8 +68,8 @@ function wait_for_webapp_to_be_deployed() {
   done
 }
 
-if curl -s --fail "http://localhost:${WEBAPP_HOST_PORT}"; then
-  >&2 echo "ERROR: webapp is already running. this is not expected"
+if curl -s --fail "http://localhost:${WEBAPP_HOST_PORT}" > /dev/null; then
+  >&2 echo "ERROR: webapp is already running. this is not expected. please stop the container. you can tear everything down with ./teardown.sh"
   exit 1
 fi
 
@@ -92,9 +92,9 @@ docker exec jenkins /bin/bash -c " sleep 10 && ssh-keyscan -p 22 git-server >> ~
 wait_for_job_to_be_created_in_jenkins
 docker exec jenkins /bin/bash -c "rm -rf /var/jenkins_home/init.groovy.d/pipeline-create.groovy"
 
-# kick off build, which will deploy webapp
-curl --fail -X POST http://localhost:8090/job/Webapp_Pipeline_Deploy/build
+echo "kicking off jenkins build for webapp, which will ultimately deploy webapp"
+curl --fail -X POST "http://localhost:${JENKINS_HOST_PORT}/job/Webapp_Pipeline_Deploy/build"
 
 wait_for_webapp_to_be_deployed
 
-echo -e "\nWebapp deployed successfully with Jenkins. Check it out at http://localhost:${WEBAPP_HOST_PORT}.\nJenkins will also be running at http://localhost:${JENKINS_HOST_PORT}"
+echo -e "\nwebapp deployed successfully with Jenkins. You can access the following apps in a browser:\n  webapp: http://localhost:${WEBAPP_HOST_PORT}\n  jenkins: http://localhost:${JENKINS_HOST_PORT}"
