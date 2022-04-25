@@ -6,7 +6,8 @@ import jenkins.hudson.*
 import hudson.model.*
 import hudson.triggers.SCMTrigger;
 
-def scm = new GitSCM("ssh://git@git-server:22/git-server/repos/webapp.git")
+// ssh://git@localhost:9022/gogs/webapp.git
+def scm = new GitSCM("ssh://git@git-server:22/gogs/webapp.git")
 scm.branches = [new BranchSpec("*/main")];
 
 def flowDefinition = new org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition(scm, "Jenkinsfile")

@@ -31,6 +31,11 @@ if ! docker ps >/dev/null ; then
   exit 1
 fi
 
+if [[ ! -f "${HOME}/.ssh/id_rsa.pub" ]]; then
+  >&2 echo "ERROR: Please generate an ssh key with: ssh-keygen -b 2048 -t rsa -q -N ''"
+  exit 1
+fi
+
 script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 source "${script_dir}/environment_variables_to_source"
 
@@ -68,25 +73,72 @@ function wait_for_webapp_to_be_deployed() {
   done
 }
 
+function wait_for_git_server_to_start() {
+  local attempts=0
+
+  while true ; do
+    if curl -s --fail "http://localhost:9090" > /dev/null; then
+      break;
+    elif [[ "$attempts" -gt 100 ]]; then
+      >&2 echo "ERROR: could not hit git-server after 100 attempts"
+      exit 1
+    else
+      attempts=$(( attempts + 1 ))
+      echo "waiting for git-server to come online. attempt: $attempts"
+      sleep 1
+    fi
+  done
+}
+
 if curl -s --fail "http://localhost:${WEBAPP_HOST_PORT}" > /dev/null; then
   >&2 echo "ERROR: webapp is already running. this is not expected. please stop the container. you can tear everything down with ./teardown.sh"
   exit 1
 fi
 
-cp ~/.ssh/id_rsa.pub "${PWD}/git-server/keys"
 docker-compose up -d
 
-# set up keys in the git server from jenkins and host
+docker cp ./git-server/app.ini jenkins-ci-cd-demo_git-server_1:/data/gogs/conf/app.ini
 docker-compose restart git-server
-jenkins_public_key=$(docker exec -it jenkins cat /root/.ssh/id_rsa.pub)
-docker exec git-server sh -c "echo $jenkins_public_key >> /home/git/.ssh/authorized_keys"
-docker exec git-server sh -c "chmod 700 /home/git/.ssh"
-docker exec git-server sh -c "chmod 600 /home/git/.ssh/*"
+wait_for_git_server_to_start
+
+curl --silent --fail 'http://localhost:9090/user/sign_up' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data-raw '_csrf=m_nby7PBgS2N31qm2GLltYTO0yo6MTY1MDkxMTM1NDIzMTE5MTE3MQ%3D%3D&user_name=gogs&email=gogs%40example.com&password=gogs&retype=gogs' \
+  --insecure >/dev/null
+
+api_token=$(curl --silent --fail -X POST -H "content-type: application/json" -d '{"name":"gogs_api_token"}' http://gogs:gogs@localhost:9090/api/v1/users/gogs/tokens | sed -E 's/.*"sha1":"([^\"]+)".*/\1/')
+if [[ -z "$api_token" ]]; then
+  >&2 echo "ERROR: Could not get api_token from git-server"
+  exit 1
+fi
+if ! curl --silent --fail -H "Authorization: token ${api_token}" -H "content-type: application/json" http://gogs:gogs@localhost:9090/api/v1/repos/gogs/webapp >/dev/null ; then
+  curl --silent -X POST --fail -H "Authorization: token ${api_token}" -H "content-type: application/json" -d '{"name":"webapp"}' http://gogs:gogs@localhost:9090/api/v1/user/repos >/dev/null
+fi
+
+function has_ssh_key() {
+  local ssh_key=$1
+  curl --fail --silent -H "Authorization: token ${api_token}" http://gogs:gogs@localhost:9090/api/v1/user/keys | grep -qE "\<${ssh_key}\>"
+}
+
+if ! has_ssh_key "gogs_key" ; then
+  public_key=$(cat "${HOME}/.ssh/id_rsa.pub")
+  curl --fail --silent -X POST -H "Authorization: token ${api_token}" -H "content-type: application/json" -d "{\"title\":\"gogs_key\",\"key\":\"${public_key}\"}" http://gogs:gogs@localhost:9090/api/v1/user/keys
+fi
+
+cd webapp
+git remote set-url origin ssh://git@localhost:9022/gogs/webapp.git
+GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no' git push -u origin main
+
+if ! has_ssh_key "jenkins_key" ; then
+  docker cp jenkins:/root/.ssh/id_rsa.pub /tmp/jenkins_public_key
+  jenkins_public_key=$(cat /tmp/jenkins_public_key)
+  echo "{\"title\":\"jenkins_key\",\"key\":\"${jenkins_public_key}\"}" >/tmp/jkey_post_body
+  curl --fail --silent -X POST -H "Authorization: token ${api_token}" -H "content-type: application/json" --data "@/tmp/jkey_post_body" http://gogs:gogs@localhost:9090/api/v1/user/keys
+fi
+
 docker exec jenkins /bin/bash -c "chmod 700 /root/.ssh"
 docker exec jenkins /bin/bash -c "chmod 600 /root/.ssh/*"
-
-# FIXME: sleep
-docker exec jenkins /bin/bash -c " sleep 10 && ssh-keyscan -p 22 git-server >> ~/.ssh/known_hosts"
+docker exec jenkins /bin/bash -c "sleep 10 && ssh-keyscan -p 22 git-server >> ~/.ssh/known_hosts"
 
 # need to wait until it actually runs the pipeline-create.groovy before removing it.
 wait_for_job_to_be_created_in_jenkins

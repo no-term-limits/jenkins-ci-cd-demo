@@ -9,14 +9,20 @@ services:
     volumes:
       - /var/lib/registry 
   git-server:
-    container_name: git-server
-    # image: jkarlos/git-server-docker
-    build: ./git-server
+    build:
+      context: ./git-server
+      args:
+        GOGS_VERSION: ${GOGS_VERSION}
+        APP_TIMEZONE: ${APP_TIMEZONE}
+    depends_on:
+      - gogs-db
     ports:
-      - "2222:22"
+      - "9090:3000"
+      - "9022:22"
     volumes:
-    - ./git-server/keys:/git-server/keys
-    - ./git-server/repos:/git-server/repos
+      - gogs_data:${GOGS_DATA_DIR}
+      - gogs_logs:${GOGS_LOGS_DIR}
+
   jenkins:
     container_name: jenkins
     build: ./jenkins
@@ -28,6 +34,17 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/jenkins_home
 
+  gogs-db:
+    image: postgres:${POSTGRES_VERSION}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: ${POSTGRES_DATA_DIR}
+    volumes:
+      - gogs_db_data:${POSTGRES_DATA_DIR}
+
+
   # webapp:
   #   container_name: webapp
   #   build: ./webapp
@@ -35,4 +52,10 @@ services:
   #     - "8091:80"    
 volumes:
   jenkins_data:
+    driver: local
+  gogs_logs:
+    driver: local
+  gogs_data:
+    driver: local
+  gogs_db_data:
     driver: local

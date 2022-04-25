@@ -1,2 +1,17 @@
 export JENKINS_HOST_PORT=8090
 export WEBAPP_HOST_PORT=8091
+
+export APP_TIMEZONE=UTC
+
+export GOGS_VERSION=0.11.86
+export GOGS_DATA_DIR=/data
+export GOGS_LOGS_DIR=/app/gogs/log
+
+export POSTGRES_VERSION=11
+export POSTGRES_HOST=db
+export POSTGRES_PORT=5432
+export POSTGRES_DB=gogs
+export POSTGRES_USER=postgres
+export POSTGRES_PASSWORD=postgres
+export POSTGRES_DATA_DIR=/var/lib/postgresql/data
+
