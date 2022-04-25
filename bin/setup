@@ -90,10 +90,15 @@ function wait_for_git_server_to_start() {
   done
 }
 
-if curl -s --fail "http://localhost:${WEBAPP_HOST_PORT}" > /dev/null; then
-  >&2 echo "ERROR: webapp is already running. this is not expected. please stop the container. you can tear everything down with ./teardown.sh"
-  exit 1
-fi
+function has_ssh_key() {
+  local ssh_key=$1
+  curl --fail --silent -H "Authorization: token ${api_token}" http://gogs:gogs@localhost:9090/api/v1/user/keys | grep -qE "\<${ssh_key}\>"
+}
+
+# if curl -s --fail "http://localhost:${WEBAPP_HOST_PORT}" > /dev/null; then
+#   >&2 echo "ERROR: webapp is already running. this is not expected. please stop the container. you can tear everything down with ./teardown.sh"
+#   exit 1
+# fi
 
 docker-compose up -d
 
@@ -115,15 +120,31 @@ if ! curl --silent --fail -H "Authorization: token ${api_token}" -H "content-typ
   curl --silent -X POST --fail -H "Authorization: token ${api_token}" -H "content-type: application/json" -d '{"name":"webapp"}' http://gogs:gogs@localhost:9090/api/v1/user/repos >/dev/null
 fi
 
-function has_ssh_key() {
-  local ssh_key=$1
-  curl --fail --silent -H "Authorization: token ${api_token}" http://gogs:gogs@localhost:9090/api/v1/user/keys | grep -qE "\<${ssh_key}\>"
-}
-
 if ! has_ssh_key "gogs_key" ; then
   public_key=$(cat "${HOME}/.ssh/id_rsa.pub")
   curl --fail --silent -X POST -H "Authorization: token ${api_token}" -H "content-type: application/json" -d "{\"title\":\"gogs_key\",\"key\":\"${public_key}\"}" http://gogs:gogs@localhost:9090/api/v1/user/keys
 fi
+
+curl --fail --silent -X POST -H "Authorization: token ${api_token}" -H "content-type: application/json" \
+  -d '{
+    "type": "gogs",
+    "config": {
+        "url": "http://jenkins:8080/gogs-webhook/?job=Webapp_Pipeline_Deploy",
+        "content_type": "json"
+    },
+    "events": [
+        "create",
+        "delete",
+        "fork",
+        "push",
+        "issues",
+        "issue_comment",
+        "pull_request",
+        "release"
+    ],
+    "active": true
+ }' \
+ http://gogs:gogs@localhost:9090/api/v1/repos/gogs/webapp/hooks
 
 cd webapp
 git remote set-url origin ssh://git@localhost:9022/gogs/webapp.git
