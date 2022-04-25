@@ -18,3 +18,5 @@ fi
 if [[ -n "$(docker ps -a --filter "name=webapp" --format '{{.Names}}')" ]]; then
   docker rm webapp
 fi
+
+rm -rf webapp
