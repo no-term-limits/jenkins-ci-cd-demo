@@ -4,6 +4,8 @@
 
 To start the environment, execute:
 
+    git clone https://github.com/no-term-limits/jenkins-ci-cd-demo.git
+    cd jenkins-ci-cd-demo
     ./bin/setup
 
 This starts:
