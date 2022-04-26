@@ -77,7 +77,7 @@ function wait_for_git_server_to_start() {
   local attempts=0
 
   while true ; do
-    if curl -s --fail "http://localhost:9090" > /dev/null; then
+    if curl -s --fail "http://localhost:${GOGS_GIT_SERVER_HOST_PORT}" > /dev/null; then
       break;
     elif [[ "$attempts" -gt 100 ]]; then
       >&2 echo "ERROR: could not hit git-server after 100 attempts"
@@ -92,7 +92,7 @@ function wait_for_git_server_to_start() {
 
 function has_ssh_key() {
   local ssh_key=$1
-  curl --fail --silent -H "Authorization: token ${api_token}" http://gogs:gogs@localhost:9090/api/v1/user/keys | grep -qE "\<${ssh_key}\>"
+  curl --fail --silent -H "Authorization: token ${api_token}" http://gogs:gogs@localhost:${GOGS_GIT_SERVER_HOST_PORT}/api/v1/user/keys | grep -qE "\<${ssh_key}\>"
 }
 
 # if curl -s --fail "http://localhost:${WEBAPP_HOST_PORT}" > /dev/null; then
@@ -106,23 +106,23 @@ docker cp ./git-server/app.ini jenkins-ci-cd-demo_git-server_1:/data/gogs/conf/a
 docker-compose restart git-server
 wait_for_git_server_to_start
 
-curl --silent --fail 'http://localhost:9090/user/sign_up' \
+curl --silent --fail "http://localhost:${GOGS_GIT_SERVER_HOST_PORT}/user/sign_up" \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   --data-raw '_csrf=m_nby7PBgS2N31qm2GLltYTO0yo6MTY1MDkxMTM1NDIzMTE5MTE3MQ%3D%3D&user_name=gogs&email=gogs%40example.com&password=gogs&retype=gogs' \
   --insecure >/dev/null
 
-api_token=$(curl --silent --fail -X POST -H "content-type: application/json" -d '{"name":"gogs_api_token"}' http://gogs:gogs@localhost:9090/api/v1/users/gogs/tokens | sed -E 's/.*"sha1":"([^\"]+)".*/\1/')
+api_token=$(curl --silent --fail -X POST -H "content-type: application/json" -d '{"name":"gogs_api_token"}' "http://gogs:gogs@localhost:${GOGS_GIT_SERVER_HOST_PORT}/api/v1/users/gogs/tokens" | sed -E 's/.*"sha1":"([^\"]+)".*/\1/')
 if [[ -z "$api_token" ]]; then
   >&2 echo "ERROR: Could not get api_token from git-server"
   exit 1
 fi
-if ! curl --silent --fail -H "Authorization: token ${api_token}" -H "content-type: application/json" http://gogs:gogs@localhost:9090/api/v1/repos/gogs/webapp >/dev/null ; then
-  curl --silent -X POST --fail -H "Authorization: token ${api_token}" -H "content-type: application/json" -d '{"name":"webapp"}' http://gogs:gogs@localhost:9090/api/v1/user/repos >/dev/null
+if ! curl --silent --fail -H "Authorization: token ${api_token}" -H "content-type: application/json" http://gogs:gogs@localhost:${GOGS_GIT_SERVER_HOST_PORT}/api/v1/repos/gogs/webapp >/dev/null ; then
+  curl --silent -X POST --fail -H "Authorization: token ${api_token}" -H "content-type: application/json" -d '{"name":"webapp"}' http://gogs:gogs@localhost:${GOGS_GIT_SERVER_HOST_PORT}/api/v1/user/repos >/dev/null
 fi
 
 if ! has_ssh_key "gogs_key" ; then
   public_key=$(cat "${HOME}/.ssh/id_rsa.pub")
-  curl --fail --silent -X POST -H "Authorization: token ${api_token}" -H "content-type: application/json" -d "{\"title\":\"gogs_key\",\"key\":\"${public_key}\"}" http://gogs:gogs@localhost:9090/api/v1/user/keys
+  curl --fail --silent -X POST -H "Authorization: token ${api_token}" -H "content-type: application/json" -d "{\"title\":\"gogs_key\",\"key\":\"${public_key}\"}" http://gogs:gogs@localhost:${GOGS_GIT_SERVER_HOST_PORT}/api/v1/user/keys
 fi
 
 curl --fail --silent -X POST -H "Authorization: token ${api_token}" -H "content-type: application/json" \
@@ -144,7 +144,7 @@ curl --fail --silent -X POST -H "Authorization: token ${api_token}" -H "content-
     ],
     "active": true
  }' \
- http://gogs:gogs@localhost:9090/api/v1/repos/gogs/webapp/hooks
+ http://gogs:gogs@localhost:${GOGS_GIT_SERVER_HOST_PORT}/api/v1/repos/gogs/webapp/hooks
 
 cd webapp
 git remote set-url origin ssh://git@localhost:9022/gogs/webapp.git
@@ -154,7 +154,7 @@ if ! has_ssh_key "jenkins_key" ; then
   docker cp jenkins:/root/.ssh/id_rsa.pub /tmp/jenkins_public_key
   jenkins_public_key=$(cat /tmp/jenkins_public_key)
   echo "{\"title\":\"jenkins_key\",\"key\":\"${jenkins_public_key}\"}" >/tmp/jkey_post_body
-  curl --fail --silent -X POST -H "Authorization: token ${api_token}" -H "content-type: application/json" --data "@/tmp/jkey_post_body" http://gogs:gogs@localhost:9090/api/v1/user/keys
+  curl --fail --silent -X POST -H "Authorization: token ${api_token}" -H "content-type: application/json" --data "@/tmp/jkey_post_body" http://gogs:gogs@localhost:${GOGS_GIT_SERVER_HOST_PORT}/api/v1/user/keys
 fi
 
 docker exec jenkins /bin/bash -c "chmod 700 /root/.ssh"
@@ -170,4 +170,4 @@ curl --fail -X POST "http://localhost:${JENKINS_HOST_PORT}/job/Webapp_Pipeline_D
 
 wait_for_webapp_to_be_deployed
 
-echo -e "\nwebapp deployed successfully with Jenkins. You can access the following apps in a browser:\n  webapp: http://localhost:${WEBAPP_HOST_PORT}\n  jenkins: http://localhost:${JENKINS_HOST_PORT}"
+echo -e "\nwebapp deployed successfully with Jenkins. You can access the following apps in a browser:\n  webapp: http://localhost:${WEBAPP_HOST_PORT}\n  jenkins: http://localhost:${JENKINS_HOST_PORT}\n  gogs git server: http://localhost:${GOGS_GIT_SERVER_HOST_PORT}\n"
