@@ -14,7 +14,7 @@ RUN apt-get update && \
       $(lsb_release -cs) \
       stable" && \
    apt-get update && \
-   apt-get -y install docker-ce
+   apt-get -y install docker-ce nodejs
 
 # install jenkins plugins
 COPY ./jenkins-plugins /usr/share/jenkins/plugins
