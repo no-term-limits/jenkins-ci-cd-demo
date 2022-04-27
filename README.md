@@ -18,9 +18,10 @@ After running the setup script, it will initialize a webapp git repo (./webapp) 
 
 ## Exercises for the reader
 
- 1. After `bin/setup` runs to completion successfully, try updating the webapp source code. There is some text that is displayed prominently on the homepage that says "This is Version N the Todos App." You could increment that number, commit and push, and see if it deploys your change successfully.
-
- 2. Update the Jenkinsfile to add a stage that checks the code for lint issues.
+ 1. After `bin/setup` runs to completion successfully, try updating the webapp source code. There is some text that is displayed prominently on the homepage that says "This is Version N of the Todos App." You could increment that number, commit and push, and see if it deploys your change successfully.
+ 2. Update the Jenkinsfile to add a stage that checks the code for lint issues. There's a helpful script in the `bin` directory.
+ 3. Update the Jenkinsfile to add a stage to checks for npm packages with security issues. There's another helpful script in `bin`.
+ 4. Update the Jenkinsfile so that the two stages you just added run in parallel
 
 ## Tear it down
 
