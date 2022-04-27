@@ -14,14 +14,15 @@ This starts:
  * docker registry (bound to host at http://localhost:8092) (`curl http://localhost:8092/v2/webapp/manifests/1`)
  * webapp (bound to host at http://localhost:8091)
 
-After running the setup script, it will initialize a webapp git repo (./webapp) that you can commit back to (git push origin main will push to gogs). When you commit, jenkins will pick up changes, build them, and deploy the new webapp docker container (accessible at http://localhost:8091 on the host).
+After running the setup script, it will initialize a webapp git repo (./webapp) that you can commit back to (`git push origin main` will push to gogs). When you commit, jenkins will pick up the changes via a gogs webhook, build them, and deploy the new webapp docker container (accessible at http://localhost:8091 on the host).
 
 ## Exercises for the reader
 
  1. After `bin/setup` runs to completion successfully, try updating the webapp source code. There is some text that is displayed prominently on the homepage that says "This is Version N of the Todos App." You could increment that number, commit and push, and see if it deploys your change successfully.
- 2. Update the Jenkinsfile to add a stage that checks the code for lint issues. There's a helpful script in the `bin` directory.
- 3. Update the Jenkinsfile to add a stage to checks for npm packages with security issues. There's another helpful script in `bin`.
+ 2. Update the Jenkinsfile to add a stage that checks the code for lint issues. There's a helpful script in the `webapp/bin` directory.
+ 3. Update the Jenkinsfile to add a stage that checks for npm packages with security issues. There's another helpful script in `webapp/bin`.
  4. Update the Jenkinsfile so that the two stages you just added run in parallel
+ 5. Probably for another day: fix the security issue by upgrading react
 
 ## Tear it down
 
