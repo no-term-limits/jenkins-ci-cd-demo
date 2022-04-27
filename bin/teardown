@@ -20,3 +20,4 @@ if [[ -n "$(docker ps -a --filter "name=webapp" --format '{{.Names}}')" ]]; then
 fi
 
 rm -rf webapp
+./bin/remove_local_git_server_from_known_hosts
