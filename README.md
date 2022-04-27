@@ -2,7 +2,8 @@
 
 ## Run it
 
-To start the environment, execute:
+To start the environment, make sure `docker ps` works, then grab the repo
+and run the setup script:
 
     git clone https://github.com/no-term-limits/jenkins-ci-cd-demo.git
     cd jenkins-ci-cd-demo
