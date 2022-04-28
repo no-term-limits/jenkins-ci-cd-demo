@@ -37,3 +37,8 @@ After running the setup script, it will initialize a webapp git repo (./webapp) 
 ## Attributions
 
 Modified from https://github.com/shashi198/webapp/blob/master/project.zip, https://medium.com/the-devops-ship/ci-cd-pipeline-using-jenkins-and-git-both-running-in-docker-containers-deployed-using-docker-6825fe81b738, and https://github.com/symfony-doge/gogs-docker-compose. 
+
+## Presentation for Ada Developers Academy Lovelace Learning Labs
+
+[Jenkins CI and CD](https://docs.google.com/presentation/d/1VFLxOjSM1NOMpgIh_99NesGYGEHXqKay6XGdMEGlA8U/edit?usp=sharing)
+
